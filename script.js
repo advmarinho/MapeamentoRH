@@ -118,20 +118,38 @@ function exportarBanco() {
 
 function importarBanco(arquivo) {
     const reader = new FileReader();
+
     reader.onload = (e) => {
         try {
-            const novoDB = JSON.parse(e.target.result);
+            const conteudo = JSON.parse(e.target.result);
 
-            novoDB.forEach(b => {
-                if (Array.isArray(b.asis)) b.asis = b.asis.join("\n");
-                if (Array.isArray(b.tobe)) b.tobe = b.tobe.join("\n");
+            let novosBeneficios = [];
+            let novosIndicadores = {};
+
+            /* SE FOR FORMATO NOVO */
+            if (conteudo.beneficios && conteudo.indicadores) {
+                novosBeneficios = conteudo.beneficios;
+                novosIndicadores = conteudo.indicadores;
+            }
+
+            /* SE FOR FORMATO ANTIGO (só benefícios) */
+            else if (Array.isArray(conteudo)) {
+                novosBeneficios = conteudo;
+            }
+
+            novosBeneficios.forEach(b => {
+                b.asis = normalizarTexto(b.asis);
+                b.tobe = normalizarTexto(b.tobe);
             });
 
-            bancoGlobal = novoDB;
-            salvarBanco(novoDB);
+            bancoGlobal = novosBeneficios;
 
-            montarCards(novoDB);
-            montarBIIndividual(novoDB);
+            /* Salvar ambos */
+            salvarBanco(novosBeneficios);
+            localStorage.setItem(BI_INDICADORES_KEY, JSON.stringify(novosIndicadores));
+
+            montarCards(novosBeneficios);
+            montarBIIndividual(novosBeneficios);
             atualizarBI();
             mostrarMensagemDefaultDetalhe();
 
@@ -143,6 +161,7 @@ function importarBanco(arquivo) {
 
     reader.readAsText(arquivo);
 }
+
 
 function resetarBase() {
     localStorage.removeItem(STORAGE_KEY);
@@ -329,10 +348,17 @@ function montarBIIndividual(db) {
 }
 
 /* SALVAR TXT */
+/* NOVO — SALVAR TXT COMPLETO (AS IS / TO BE + INDICADORES) */
 function salvarTXT() {
-    const db = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const beneficios = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const indicadores = JSON.parse(localStorage.getItem(BI_INDICADORES_KEY) || "{}");
 
-    const blob = new Blob([JSON.stringify(db, null, 4)], {
+    const pacoteCompleto = {
+        beneficios: beneficios,
+        indicadores: indicadores
+    };
+
+    const blob = new Blob([JSON.stringify(pacoteCompleto, null, 4)], {
         type: "application/json;charset=utf-8"
     });
 
@@ -340,11 +366,12 @@ function salvarTXT() {
     const a = document.createElement("a");
 
     a.href = url;
-    a.download = "beneficios_db_autosalvo.txt";
+    a.download = "beneficios_completo_autosalvo.txt";
     a.click();
 
     URL.revokeObjectURL(url);
 }
+
 
 /* EVENTOS */
 window.addEventListener("load", () => {
@@ -401,4 +428,5 @@ function marcarCardAtivo(nome) {
     const ativo = document.querySelector(`.card[data-nome="${nome}"]`);
     if (ativo) ativo.classList.add("card-ativo");
 }
+
 
