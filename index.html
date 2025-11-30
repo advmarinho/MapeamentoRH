@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Operacional de Benefícios – Sonova</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Mapa Operacional de Benefícios – Sonova</h1>
+    <p class="sub">AS IS • TO BE • Impacto Operacional • Uso Interno Sonova</p>
+
+    <div class="menu-acoes">
+        <button id="btn-exportar">Exportar Base</button>
+        <button id="btn-importar">Importar Base</button>
+        <button id="btn-resetar">Resetar Base</button>
+        <button id="btn-salvar-txt">Salvar TXT</button>
+        <input type="file" id="input-importar" style="display:none;">
+    </div>
+</header>
+
+<main>
+
+    <!-- 1. BENEFÍCIOS MAPEADOS -->
+    <h2>Benefícios Mapeados</h2>
+    <div id="lista-beneficios" class="grid"></div>
+
+
+    <!-- 2. DETALHAMENTO DO BENEFÍCIO (AS IS / TO BE) — AGORA EM CIMA DO BI -->
+    <h2>Detalhamento do Benefício</h2>
+    <div id="conteudo-detalhes"></div>
+
+
+    <!-- 3. BI GERAL -->
+    <section id="bi-melhoria">
+        <h2>Cenários de Melhoria no BI</h2>
+        <div class="bi-grid">
+
+            <div class="bi-card">
+                <div class="bi-numero tooltip"
+                    id="bi-retrabalho"
+                    data-help="Redução de retrabalho: soma de todas as ações AS IS mapeadas. Cada linha representa um passo manual real.">
+                    0
+                </div>
+                <div class="bi-unidade">ações</div>
+                <div class="bi-titulo">Redução de Retrabalho</div>
+                <div class="bi-desc">Automação e eliminação de operações manuais.</div>
+            </div>
+
+            <div class="bi-card">
+                <div class="bi-numero tooltip"
+                    id="bi-tempo"
+                    data-help="Tempo operacional estimado: 60% do total AS IS (total_ASIS × 0,6). Proxy de horas/mês.">
+                    0
+                </div>
+                <div class="bi-unidade">horas</div>
+                <div class="bi-titulo">Tempo Operacional</div>
+                <div class="bi-desc">Esforço mensal necessário para manter os processos.</div>
+            </div>
+
+            <div class="bi-card">
+                <div class="bi-numero tooltip"
+                    id="bi-base"
+                    data-help="Confiabilidade da base: 30% do total de TO BE. Representa ganho de precisão dos dados.">
+                    0
+                </div>
+                <div class="bi-unidade">pontos</div>
+                <div class="bi-titulo">Confiabilidade da Base</div>
+                <div class="bi-desc">Redução de inconsistências com automações.</div>
+            </div>
+
+            <div class="bi-card">
+                <div class="bi-numero tooltip"
+                    id="bi-sla"
+                    data-help="SLA: 50% das atividades de TO BE indicam potenciais reduções no tempo de atendimento.">
+                    0
+                </div>
+                <div class="bi-unidade">dias</div>
+                <div class="bi-titulo">SLA de Benefícios</div>
+                <div class="bi-desc">Melhora na velocidade de entrega ao colaborador.</div>
+            </div>
+
+            <div class="bi-card">
+                <div class="bi-numero tooltip"
+                    id="bi-compare"
+                    data-help="AS IS × TO BE: TO BE total menos AS IS total. Quanto maior, maior o impacto positivo.">
+                    0
+                </div>
+                <div class="bi-unidade">ganhos</div>
+                <div class="bi-titulo">AS IS × TO BE</div>
+                <div class="bi-desc">Comparação direta entre esforço atual e futuro.</div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- 4. BI INDIVIDUAL -->
+    <section id="bi-beneficio">
+        <h2>Indicadores por Benefício</h2>
+        <div id="bi-beneficio-grid" class="bi-beneficio-grid"></div>
+    </section>
+
+</main>
+
+<footer>
+    Uso Interno Sonova - By Anderson Souza
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

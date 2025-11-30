@@ -1,0 +1,252 @@
+body {
+    margin: 0;
+    background: #f5f7fa;
+    font-family: Calibri, Arial, sans-serif;
+    color: #222;
+}
+
+header {
+    background: #003366;
+    color: white;
+    padding: 25px 20px;
+    text-align: center;
+}
+
+.menu-acoes {
+    margin-top: 14px;
+}
+
+.menu-acoes button {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0 5px;
+}
+
+.menu-acoes button:hover {
+    background: #e0e5ee;
+}
+
+main {
+    padding: 20px;
+}
+
+h2 {
+    border-left: 5px solid #003366;
+    padding-left: 10px;
+    margin-top: 30px;
+}
+
+/* Grid dos cards */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+}
+
+.card {
+    background: white;
+    border-radius: 6px;
+    padding: 16px 18px;
+    box-shadow: 0 0 5px rgba(0,0,0,.15);
+    cursor: pointer;
+}
+
+.card:hover {
+    background: #e9f1ff;
+}
+
+.card-titulo {
+    font-size: 17px;
+    font-weight: bold;
+    color: #003366;
+}
+
+.card-categoria {
+    font-size: 13px;
+    opacity: .8;
+}
+
+/* Impactos */
+.impacto {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 50px;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+.impacto-vermelho {
+    background: #ffe0e0;
+    border: 1px solid #cc0000;
+}
+.impacto-laranja {
+    background: #fff1d6;
+    border: 1px solid #d28b00;
+}
+.impacto-medio {
+    background: #e5f1ff;
+    border: 1px solid #2a7abd;
+}
+.impacto-baixo {
+    background: #e7ffe9;
+    border: 1px solid #2e8b57;
+}
+.impacto-zero {
+    background: #eeeeee;
+    border: 1px solid #aaaaaa;
+}
+
+/* BI geral */
+.bi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 18px;
+}
+
+.bi-card {
+    background: white;
+    padding: 20px;
+    border-radius: 6px;
+    text-align: center;
+    box-shadow: 0 0 5px rgba(0,0,0,.15);
+}
+
+.bi-numero {
+    font-size: 32px;
+    font-weight: bold;
+    color: #003366;
+}
+
+.bi-unidade {
+    font-size: 13px;
+    opacity: .7;
+}
+
+.bi-titulo {
+    font-weight: bold;
+}
+
+.bi-desc {
+    font-size: 13px;
+    opacity: .7;
+}
+
+/* BI individual */
+.bi-beneficio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 20px;
+}
+
+.bi-card-individual {
+    background: white;
+    padding: 18px;
+    border-radius: 8px;
+    box-shadow: 0 0 4px rgba(0,0,0,.12);
+}
+
+.bi-beneficio-titulo {
+    font-size: 18px;
+    color: #003366;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.bi-card-individual input {
+    width: 100%;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 12px;
+}
+
+.bi-salvar {
+    padding: 8px;
+    background: #003366;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.bi-salvar:hover {
+    background: #001f40;
+}
+
+/* Detalhamento */
+.bloco {
+    background: white;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 4px rgba(0,0,0,.12);
+}
+
+.titulo-bloco {
+    font-size: 17px;
+    color: #003366;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+textarea {
+    width: 100%;
+    min-height: 25em;
+    font-family: Calibri;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    resize: vertical;
+}
+
+/* Tooltip */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip:hover::after {
+    content: attr(data-help);
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 260px;
+    background: #003366;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 99;
+    box-shadow: 0 0 6px rgba(0,0,0,.2);
+}
+
+.tooltip:hover::before {
+    content: "";
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 10px solid #003366;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 12px;
+    font-size: 12px;
+    background: #e4e7ee;
+    border-top: 1px solid #cdd2dd;
+}
+
+/* Card selecionado (ativo) */
+.card.card-ativo {
+    border: 2px solid #003366;
+    background: #dfeaff;
+}
+
