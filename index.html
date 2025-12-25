@@ -3,37 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa Operacional de Benefícios – Sonova</title>
+    <title>Mapa Operacional de Ações – Sonova</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
-    <h1>Mapa Operacional de Benefícios – Sonova</h1>
+    <h1>Mapa Operacional de Ações – Sonova</h1>
     <p class="sub">AS IS • TO BE • Impacto Operacional • Uso Interno Sonova</p>
 
     <div class="menu-acoes">
-        <button id="btn-exportar">Exportar Base</button>
-        <button id="btn-importar">Importar Base</button>
-        <button id="btn-resetar">Resetar Base</button>
-        <button id="btn-salvar-txt">Salvar TXT</button>
+        <button id="btn-exportar" type="button">Exportar Base</button>
+        <button id="btn-importar" type="button">Importar Base</button>
+        <button id="btn-resetar" type="button">Resetar Base</button>
+        <button id="btn-salvar-txt" type="button">Salvar TXT</button>
         <input type="file" id="input-importar" style="display:none;">
     </div>
 </header>
 
 <main>
 
-    <!-- 1. BENEFÍCIOS MAPEADOS -->
-    <h2>Benefícios Mapeados</h2>
+    <h2>Ações Mapeadas</h2>
+    <div class="sec-actions">
+        <button id="btn-Novas-beneficio" type="button">Novas Ações</button>
+    </div>
     <div id="lista-beneficios" class="grid"></div>
 
-
-    <!-- 2. DETALHAMENTO DO BENEFÍCIO (AS IS / TO BE) — AGORA EM CIMA DO BI -->
-    <h2>Detalhamento do Benefício</h2>
+    <h2>Detalhamento das Ações</h2>
     <div id="conteudo-detalhes"></div>
 
-
-    <!-- 3. BI GERAL -->
     <section id="bi-melhoria">
         <h2>Cenários de Melhoria no BI</h2>
         <div class="bi-grid">
@@ -78,7 +76,7 @@
                     0
                 </div>
                 <div class="bi-unidade">dias</div>
-                <div class="bi-titulo">SLA de Benefícios</div>
+                <div class="bi-titulo">SLA de Ações</div>
                 <div class="bi-desc">Melhora na velocidade de entrega ao colaborador.</div>
             </div>
 
@@ -96,10 +94,8 @@
         </div>
     </section>
 
-
-    <!-- 4. BI INDIVIDUAL -->
     <section id="bi-beneficio">
-        <h2>Indicadores por Benefício</h2>
+        <h2>Indicadores por Ações</h2>
         <div id="bi-beneficio-grid" class="bi-beneficio-grid"></div>
     </section>
 
