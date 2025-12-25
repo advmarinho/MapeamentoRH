@@ -12,6 +12,11 @@ header {
     text-align: center;
 }
 
+.sub {
+    margin-top: 6px;
+    opacity: 0.9;
+}
+
 .menu-acoes {
     margin-top: 14px;
 }
@@ -37,6 +42,25 @@ h2 {
     border-left: 5px solid #003366;
     padding-left: 10px;
     margin-top: 30px;
+}
+
+.sec-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.sec-actions button {
+    background: #ffffff;
+    border: 1px solid #cdd2dd;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.sec-actions button:hover {
+    background: #e0e5ee;
 }
 
 /* Grid dos cards */
@@ -192,10 +216,55 @@ h2 {
     margin-bottom: 10px;
 }
 
+.form-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.form-field {
+    flex: 1 1 260px;
+    min-width: 220px;
+}
+
+.form-field label {
+    display: block;
+    font-size: 13px;
+    opacity: 0.85;
+    margin-bottom: 6px;
+}
+
+.input-text {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid #cdd2dd;
+    background: #fff;
+    outline: none;
+}
+
+.input-text:focus {
+    border-color: #003366;
+}
+
+.btn-perigo {
+    background: #ffffff;
+    border: 1px solid #cc0000;
+    color: #cc0000;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-perigo:hover {
+    background: #ffe0e0;
+}
+
 textarea {
     width: 100%;
-    min-height: 25em;
-    font-family: Calibri;
+    min-height: 35em;
+    font-family: Calibri, Arial, sans-serif;
     padding: 10px;
     border-radius: 6px;
     border: 1px solid #ccc;
@@ -249,4 +318,3 @@ footer {
     border: 2px solid #003366;
     background: #dfeaff;
 }
-
