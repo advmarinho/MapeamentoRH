@@ -543,7 +543,7 @@ function atualizarBI() {
     });
 
     document.getElementById("bi-retrabalho").textContent = totalASIS;
-    document.getElementById("bi-tempo").textContent      = Math.round(totalASIS * 0.6);
+    document.getElementById("bi-tempo").textContent      = Math.round(totalASIS * 0.75);
     document.getElementById("bi-base").textContent       = Math.round(totalTOBE * 0.3);
 
     // Ajuste: SLA consolidado a partir do BI individual (média dos SLAs preenchidos)
@@ -698,3 +698,4 @@ window.addEventListener("load", () => {
 
     if (btnNovo) btnNovo.onclick = criarNovoBeneficio;
 });
+
