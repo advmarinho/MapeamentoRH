@@ -698,4 +698,3 @@ window.addEventListener("load", () => {
 
     if (btnNovo) btnNovo.onclick = criarNovoBeneficio;
 });
-
