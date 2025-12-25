@@ -1,6 +1,7 @@
 /********************************************************************
  *  SCRIPT COMPLETO – MAPA OPERACIONAL DE BENEFÍCIOS SONOVA
- *  V9 – CAIXAS (CARDS) EDITÁVEIS + INCLUSÃO DE NOVAS CAIXAS
+ *  V10 – CAIXAS (CARDS) EDITÁVEIS + INCLUSÃO DE NOVAS CAIXAS
+ *        + SLA CONSOLIDADO NO BI GERAL (a partir do BI individual)
  *
  *  Mantido do projeto:
  *  - Exportar / Importar / Resetar
@@ -495,7 +496,43 @@ function criarNovoBeneficio() {
     abrirEditor(nomeFinal);
 }
 
-/* BI GERAL */
+/* =========================
+   BI GERAL (AJUSTE SLA)
+   - SLA agora consolida o BI individual
+   - fallback: mantém totalTOBE * 0.5 se não houver SLA preenchido
+========================= */
+
+function lerIndicadoresBI() {
+    try {
+        return JSON.parse(localStorage.getItem(BI_INDICADORES_KEY) || "{}");
+    } catch {
+        return {};
+    }
+}
+
+function calcularSlaGeralConsolidado(db, totalTOBE) {
+    const bi = lerIndicadoresBI();
+
+    let somaSla = 0;
+    let qtdSla = 0;
+
+    db.forEach(b => {
+        const nome = b.nome;
+        const val = bi && bi[nome] ? Number(bi[nome].sla || 0) : 0;
+        if (val > 0) {
+            somaSla += val;
+            qtdSla += 1;
+        }
+    });
+
+    if (qtdSla > 0) {
+        return Math.round(somaSla / qtdSla);
+    }
+
+    // fallback: mantém a regra original
+    return Math.round(totalTOBE * 0.5);
+}
+
 function atualizarBI() {
     let totalASIS = 0;
     let totalTOBE = 0;
@@ -508,7 +545,10 @@ function atualizarBI() {
     document.getElementById("bi-retrabalho").textContent = totalASIS;
     document.getElementById("bi-tempo").textContent      = Math.round(totalASIS * 0.6);
     document.getElementById("bi-base").textContent       = Math.round(totalTOBE * 0.3);
-    document.getElementById("bi-sla").textContent        = Math.round(totalTOBE * 0.5);
+
+    // Ajuste: SLA consolidado a partir do BI individual (média dos SLAs preenchidos)
+    document.getElementById("bi-sla").textContent = calcularSlaGeralConsolidado(bancoGlobal, totalTOBE);
+
     document.getElementById("bi-compare").textContent    = totalTOBE - totalASIS;
 }
 
@@ -583,6 +623,10 @@ function montarBIIndividual(db) {
                 confiabilidade: Number(document.getElementById(`confi_${safeId}`).value || 0)
             };
             salvarBIIndividual(bi);
+
+            // Ajuste: reflete imediatamente no BI Geral
+            atualizarBI();
+
             alert("Indicadores salvos para " + b.nome);
         };
 
