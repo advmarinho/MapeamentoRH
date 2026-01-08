@@ -9,13 +9,145 @@
  *  - BI geral
  *  - BI individual
  *  - Salvar TXT completo
+ *
+ *  Complemento:
+ *  - Badges discretos: Horas (AS IS × fator) e R$ (Horas × R$/hora)
+ *  - Inputs para fator / valor-hora / modo de exibição, com persistência
  ********************************************************************/
 
 const STORAGE_KEY = "beneficiosDB_final_V8";
 const BI_INDICADORES_KEY = "biIndicadores_beneficiosV8";
 
+/* Config */
+const APP_CONFIG_KEY = "mapaConfig_beneficiosV8";
+const DEFAULT_CONFIG = {
+    fatorHoras: 0.75,
+    valorHora: 0,
+    exibicaoMoeda: "compact" // "compact" | "full"
+};
+
 let bancoGlobal = [];
 let beneficioSelecionado = null;
+
+/* =========================
+   CONFIG
+========================= */
+
+function lerConfigApp() {
+    let cfg = { ...DEFAULT_CONFIG };
+    try {
+        const salvo = JSON.parse(localStorage.getItem(APP_CONFIG_KEY) || "null");
+        if (salvo && typeof salvo === "object") {
+            cfg.fatorHoras = Number(salvo.fatorHoras ?? cfg.fatorHoras);
+            cfg.valorHora = Number(salvo.valorHora ?? cfg.valorHora);
+            cfg.exibicaoMoeda = String(salvo.exibicaoMoeda ?? cfg.exibicaoMoeda);
+        }
+    } catch {
+        // silencioso
+    }
+
+    if (!isFinite(cfg.fatorHoras) || cfg.fatorHoras < 0) cfg.fatorHoras = DEFAULT_CONFIG.fatorHoras;
+    if (!isFinite(cfg.valorHora) || cfg.valorHora < 0) cfg.valorHora = DEFAULT_CONFIG.valorHora;
+    if (cfg.exibicaoMoeda !== "compact" && cfg.exibicaoMoeda !== "full") cfg.exibicaoMoeda = DEFAULT_CONFIG.exibicaoMoeda;
+
+    return cfg;
+}
+
+function salvarConfigApp(cfg) {
+    const safe = {
+        fatorHoras: Number(cfg.fatorHoras || 0),
+        valorHora: Number(cfg.valorHora || 0),
+        exibicaoMoeda: (cfg.exibicaoMoeda === "full") ? "full" : "compact"
+    };
+    localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(safe));
+}
+
+function aplicarConfigNaUI() {
+    const cfg = lerConfigApp();
+
+    const elFator = document.getElementById("cfg-fator-horas");
+    const elHora = document.getElementById("cfg-valor-hora");
+    const elModo = document.getElementById("cfg-exibicao-moeda");
+
+    if (elFator) elFator.value = String(cfg.fatorHoras);
+    if (elHora) elHora.value = String(cfg.valorHora);
+    if (elModo) elModo.value = String(cfg.exibicaoMoeda);
+}
+
+function initConfigUI() {
+    const elFator = document.getElementById("cfg-fator-horas");
+    const elHora = document.getElementById("cfg-valor-hora");
+    const elModo = document.getElementById("cfg-exibicao-moeda");
+
+    if (!elFator || !elHora || !elModo) return;
+
+    aplicarConfigNaUI();
+
+    const onChange = () => {
+        const novo = {
+            fatorHoras: Number(elFator.value || 0),
+            valorHora: Number(elHora.value || 0),
+            exibicaoMoeda: String(elModo.value || "compact")
+        };
+
+        salvarConfigApp(novo);
+
+        montarCards(bancoGlobal);
+        atualizarBI();
+    };
+
+    elFator.addEventListener("input", onChange);
+    elHora.addEventListener("input", onChange);
+    elModo.addEventListener("change", onChange);
+}
+
+/* =========================
+   FORMATADORES
+========================= */
+
+function trimZerosDecimal(str) {
+    return str.replace(/([.,]\d*?)0+$/g, "$1").replace(/[.,]$/g, "");
+}
+
+function formatBRL(value, mode) {
+    const v = Number(value || 0);
+    if (!isFinite(v)) return "R$ 0";
+
+    if (mode === "full") {
+        try {
+            return v.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+                maximumFractionDigits: 0
+            });
+        } catch {
+            return "R$ " + String(Math.round(v));
+        }
+    }
+
+    const abs = Math.abs(v);
+    const sign = v < 0 ? "-" : "";
+    const toPt = (num) => String(num).replace(".", ",");
+
+    if (abs >= 1e9) {
+        const s = trimZerosDecimal(toPt((abs / 1e9).toFixed(1)));
+        return `${sign}R$ ${s}B`;
+    }
+    if (abs >= 1e6) {
+        const s = trimZerosDecimal(toPt((abs / 1e6).toFixed(1)));
+        return `${sign}R$ ${s}M`;
+    }
+    if (abs >= 1e3) {
+        const s = trimZerosDecimal(toPt((abs / 1e3).toFixed(1)));
+        return `${sign}R$ ${s}k`;
+    }
+
+    return `${sign}R$ ${Math.round(abs)}`;
+}
+
+/* =========================
+   BASE
+========================= */
 
 function normalizarTexto(valor) {
     if (!valor) return "";
@@ -113,7 +245,6 @@ async function carregarBanco() {
     atualizarBI();
     mostrarMensagemDefaultDetalhe();
 
-    // Mantém o comportamento anterior
     salvarTXT();
 }
 
@@ -149,33 +280,127 @@ function exportarBanco() {
 function importarBanco(arquivo) {
     const reader = new FileReader();
 
+    const normalizarNomeChave = (s) => {
+        return String(s ?? "")
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    };
+
+    const coerceIndicador = (raw) => {
+        const r = (raw && typeof raw === "object") ? raw : {};
+
+        const pickNumber = (...vals) => {
+            for (const v of vals) {
+                const n = Number(v);
+                if (isFinite(n)) return n;
+            }
+            return 0;
+        };
+
+        const slaVal =
+            r.sla ?? r.SLA ?? r.slaDias ?? r.sla_dias ?? r["SLA (dias)"] ?? r["SLA(dias)"] ?? 0;
+
+        const tempoVal =
+            r.tempo ?? r.Tempo ?? r.tempoOperacional ?? r.tempo_operacional ?? r["Tempo Operacional (h/mês)"] ?? 0;
+
+        const retrabalhoVal =
+            r.retrabalho ?? r.Retrabalho ?? r.retrabalhoPct ?? r.retrabalho_pct ?? r["Retrabalho (%)"] ?? 0;
+
+        const confiVal =
+            r.confiabilidade ?? r.confi ?? r.confiabilidadeBase ?? r.confiabilidade_base ??
+            r["Confiabilidade da Base (%)"] ?? 0;
+
+        return {
+            tempo: pickNumber(tempoVal, 0),
+            retrabalho: pickNumber(retrabalhoVal, 0),
+            sla: pickNumber(slaVal, 0),
+            confiabilidade: pickNumber(confiVal, 0)
+        };
+    };
+
     reader.onload = (e) => {
         try {
             const conteudo = JSON.parse(e.target.result);
 
             let novosBeneficios = [];
-            let novosIndicadores = {};
+            let novosIndicadoresBrutos = {};
+            let novoConfig = null;
 
-            if (conteudo && conteudo.beneficios && conteudo.indicadores) {
+            // Formato atual: { beneficios, indicadores, config? }
+            if (conteudo && typeof conteudo === "object" && conteudo.beneficios && conteudo.indicadores) {
                 novosBeneficios = conteudo.beneficios;
-                novosIndicadores = conteudo.indicadores;
-            } else if (Array.isArray(conteudo)) {
+                novosIndicadoresBrutos = conteudo.indicadores || {};
+                if (conteudo.config) novoConfig = conteudo.config;
+            }
+            // Formato: Array de benefícios (exportar base)
+            else if (Array.isArray(conteudo)) {
                 novosBeneficios = conteudo;
+                novosIndicadoresBrutos = {};
+            }
+            // Formatos alternativos (tolerância):
+            else if (conteudo && typeof conteudo === "object") {
+                novosBeneficios =
+                    conteudo.base || conteudo.db || conteudo.banco || conteudo.beneficios || [];
+                novosIndicadoresBrutos =
+                    conteudo.indicadores || conteudo.bi || conteudo.biIndicadores || conteudo[BI_INDICADORES_KEY] || {};
+                if (conteudo.config) novoConfig = conteudo.config;
             } else {
                 throw new Error("Formato inválido");
             }
 
-            novosBeneficios = novosBeneficios.map(b => ({
+            novosBeneficios = (novosBeneficios || []).map(b => ({
                 nome: (b.nome || "").trim(),
                 categoria: (b.categoria || "").trim(),
                 asis: normalizarTexto(b.asis),
                 tobe: normalizarTexto(b.tobe)
             })).filter(x => x.nome !== "");
 
+            // Normaliza/recupera indicadores casando pelo nome do benefício (mesmo com espaços/acentos)
+            const idxIndicadores = {};
+            if (novosIndicadoresBrutos && typeof novosIndicadoresBrutos === "object") {
+                Object.keys(novosIndicadoresBrutos).forEach(k => {
+                    const nk = normalizarNomeChave(k);
+                    if (!idxIndicadores[nk]) idxIndicadores[nk] = novosIndicadoresBrutos[k];
+                });
+            }
+
+            const novosIndicadores = {};
+            novosBeneficios.forEach(b => {
+                const nome = b.nome;
+                const alvo1 = (novosIndicadoresBrutos && novosIndicadoresBrutos[nome]) ? novosIndicadoresBrutos[nome] : null;
+                const alvo2 = (!alvo1) ? idxIndicadores[normalizarNomeChave(nome)] : null;
+
+                if (alvo1 || alvo2) {
+                    novosIndicadores[nome] = coerceIndicador(alvo1 || alvo2);
+                }
+            });
+
             bancoGlobal = novosBeneficios;
 
             salvarBanco(novosBeneficios);
-            localStorage.setItem(BI_INDICADORES_KEY, JSON.stringify(novosIndicadores || {}));
+
+            // Evita "zerar" SLA quando o TXT importado é só a base (array de benefícios)
+            const temIndicadores =
+                novosIndicadoresBrutos &&
+                typeof novosIndicadoresBrutos === "object" &&
+                Object.keys(novosIndicadoresBrutos).length > 0;
+
+            if (temIndicadores) {
+                localStorage.setItem(BI_INDICADORES_KEY, JSON.stringify(novosIndicadores));
+            }
+
+            if (novoConfig && typeof novoConfig === "object") {
+                const atual = lerConfigApp();
+                const merged = {
+                    fatorHoras: Number(novoConfig.fatorHoras ?? atual.fatorHoras),
+                    valorHora: Number(novoConfig.valorHora ?? atual.valorHora),
+                    exibicaoMoeda: String(novoConfig.exibicaoMoeda ?? atual.exibicaoMoeda)
+                };
+                salvarConfigApp(merged);
+                aplicarConfigNaUI();
+            }
 
             montarCards(novosBeneficios);
             montarBIIndividual(novosBeneficios);
@@ -194,8 +419,11 @@ function importarBanco(arquivo) {
 function resetarBase() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(BI_INDICADORES_KEY);
+    localStorage.removeItem(APP_CONFIG_KEY);
+
     beneficioSelecionado = null;
     carregarBanco();
+    aplicarConfigNaUI();
     alert("Base resetada.");
 }
 
@@ -212,15 +440,29 @@ function montarCards(db) {
     const container = document.getElementById("lista-beneficios");
     container.innerHTML = "";
 
+    const cfg = lerConfigApp();
+
     db.forEach(b => {
         const qtd = contarAcoes(b.asis);
         const impacto = classificarImpacto(qtd);
+
+        const horas = Math.round(qtd * cfg.fatorHoras);
+        const custo = horas * cfg.valorHora;
 
         const card = document.createElement("div");
         card.className = "card";
         card.dataset.nome = b.nome;
 
         card.innerHTML = `
+            <div class="card-metrics">
+                <div class="card-metric" title="Horas estimadas: linhas AS IS × fator">
+                    ${horas}h
+                </div>
+                <div class="card-metric" title="Custo estimado: horas × R$/hora">
+                    ${formatBRL(custo, cfg.exibicaoMoeda)}
+                </div>
+            </div>
+
             <div class="card-titulo">${b.nome}</div>
             <div class="card-categoria">${b.categoria || ""}</div>
             <div class="impacto ${impacto.classe}">
@@ -315,9 +557,7 @@ function abrirEditor(nome) {
     const inpNome = document.getElementById("nomeBeneficio");
     const inpCat = document.getElementById("categoriaBeneficio");
 
-    // Renomeia quando sair do campo (mais seguro do que renomear a cada tecla)
     inpNome.addEventListener("change", () => {
-        // salva textos antes de renomear
         autosaveEditor(item.nome, { reRender: false });
 
         const novoNome = (inpNome.value || "").trim();
@@ -333,7 +573,6 @@ function abrirEditor(nome) {
         }
     });
 
-    // Categoria pode atualizar em tempo real
     inpCat.addEventListener("input", () => {
         const atual = bancoGlobal.find(x => x.nome === beneficioSelecionado);
         if (!atual) return;
@@ -369,7 +608,6 @@ function autosaveEditor(nome, opts) {
         montarCards(bancoGlobal);
         marcarCardAtivo(nome);
 
-        // atualiza a linha do impacto sem reabrir editor
         const det = document.getElementById("conteudo-detalhes");
         const p = det ? det.querySelector(".bloco p") : null;
         if (p) {
@@ -393,7 +631,6 @@ function renomearBeneficio(nomeAntigo, nomeNovo) {
     const item = bancoGlobal.find(x => x.nome === antigo);
     if (!item) return false;
 
-    // Renomeia no BI individual
     let bi = {};
     try {
         bi = JSON.parse(localStorage.getItem(BI_INDICADORES_KEY) || "{}");
@@ -406,7 +643,6 @@ function renomearBeneficio(nomeAntigo, nomeNovo) {
         delete bi[antigo];
         localStorage.setItem(BI_INDICADORES_KEY, JSON.stringify(bi));
     } else if (!bi[novo]) {
-        // garante que exista
         bi[novo] = { tempo: 0, retrabalho: 0, sla: 0, confiabilidade: 0 };
         if (bi[antigo]) delete bi[antigo];
         localStorage.setItem(BI_INDICADORES_KEY, JSON.stringify(bi));
@@ -438,7 +674,6 @@ function excluirBeneficio(nome) {
 
     salvarBanco(bancoGlobal);
 
-    // remove do BI individual
     let bi = {};
     try {
         bi = JSON.parse(localStorage.getItem(BI_INDICADORES_KEY) || "{}");
@@ -476,7 +711,6 @@ function criarNovoBeneficio() {
     bancoGlobal.push(novo);
     salvarBanco(bancoGlobal);
 
-    // Garante BI individual para o novo
     let bi = {};
     try {
         bi = JSON.parse(localStorage.getItem(BI_INDICADORES_KEY) || "{}");
@@ -497,9 +731,7 @@ function criarNovoBeneficio() {
 }
 
 /* =========================
-   BI GERAL (AJUSTE SLA)
-   - SLA agora consolida o BI individual
-   - fallback: mantém totalTOBE * 0.5 se não houver SLA preenchido
+   BI GERAL (SLA CONSOLIDADO)
 ========================= */
 
 function lerIndicadoresBI() {
@@ -529,7 +761,6 @@ function calcularSlaGeralConsolidado(db, totalTOBE) {
         return Math.round(somaSla / qtdSla);
     }
 
-    // fallback: mantém a regra original
     return Math.round(totalTOBE * 0.5);
 }
 
@@ -542,14 +773,13 @@ function atualizarBI() {
         totalTOBE += contarAcoes(b.tobe);
     });
 
+    const cfg = lerConfigApp();
+
     document.getElementById("bi-retrabalho").textContent = totalASIS;
-    document.getElementById("bi-tempo").textContent      = Math.round(totalASIS * 0.75);
-    document.getElementById("bi-base").textContent       = Math.round(totalTOBE * 0.3);
-
-    // Ajuste: SLA consolidado a partir do BI individual (média dos SLAs preenchidos)
+    document.getElementById("bi-tempo").textContent = Math.round(totalASIS * cfg.fatorHoras);
+    document.getElementById("bi-base").textContent = Math.round(totalTOBE * 0.3);
     document.getElementById("bi-sla").textContent = calcularSlaGeralConsolidado(bancoGlobal, totalTOBE);
-
-    document.getElementById("bi-compare").textContent    = totalTOBE - totalASIS;
+    document.getElementById("bi-compare").textContent = totalTOBE - totalASIS;
 }
 
 /* BI INDIVIDUAL */
@@ -624,7 +854,6 @@ function montarBIIndividual(db) {
             };
             salvarBIIndividual(bi);
 
-            // Ajuste: reflete imediatamente no BI Geral
             atualizarBI();
 
             alert("Indicadores salvos para " + b.nome);
@@ -638,10 +867,12 @@ function montarBIIndividual(db) {
 function salvarTXT() {
     const beneficios = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     const indicadores = JSON.parse(localStorage.getItem(BI_INDICADORES_KEY) || "{}");
+    const config = lerConfigApp();
 
     const pacoteCompleto = {
         beneficios: beneficios,
-        indicadores: indicadores
+        indicadores: indicadores,
+        config: config
     };
 
     const blob = new Blob([JSON.stringify(pacoteCompleto, null, 4)], {
@@ -669,12 +900,12 @@ function escapeHtml(texto) {
 }
 
 function escapeTextarea(texto) {
-    // em <textarea> precisa escapar só o suficiente para não quebrar HTML
     return String(texto ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 /* EVENTOS */
 window.addEventListener("load", () => {
+    initConfigUI();
     carregarBanco();
 
     document.getElementById("btn-exportar").onclick = exportarBanco;
@@ -690,7 +921,6 @@ window.addEventListener("load", () => {
 
     document.getElementById("btn-salvar-txt").onclick = salvarTXT;
 
-    // Compatibilidade: caso você tenha renomeado o id do botão "Novo/Novas Ações"
     const btnNovo =
         document.getElementById("btn-novo-beneficio") ||
         document.getElementById("btn-Novas-beneficio") ||

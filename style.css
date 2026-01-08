@@ -63,6 +63,53 @@ h2 {
     background: #e0e5ee;
 }
 
+/* Barra de configuração (inputs) */
+.config-bar {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 14px;
+    box-shadow: 0 0 4px rgba(0,0,0,.10);
+    margin-bottom: 16px;
+    border: 1px solid #e3e6ee;
+}
+
+.config-item {
+    flex: 1 1 240px;
+    min-width: 220px;
+}
+
+.config-item label {
+    display: block;
+    font-size: 13px;
+    opacity: 0.85;
+    margin-bottom: 6px;
+}
+
+.config-item input,
+.config-item select {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid #cdd2dd;
+    background: #fff;
+    outline: none;
+}
+
+.config-item input:focus,
+.config-item select:focus {
+    border-color: #003366;
+}
+
+.config-hint {
+    margin-top: 6px;
+    font-size: 12px;
+    opacity: 0.75;
+}
+
 /* Grid dos cards */
 .grid {
     display: grid;
@@ -74,8 +121,11 @@ h2 {
     background: white;
     border-radius: 6px;
     padding: 16px 18px;
+    padding-right: 110px;  /* reserva para o topo direito não encostar no texto */
+    padding-bottom: 16px; /* reduz porque badges ficam juntos no topo */
     box-shadow: 0 0 5px rgba(0,0,0,.15);
     cursor: pointer;
+    position: relative;   /* necessário pros badges absolutos */
 }
 
 .card:hover {
@@ -93,6 +143,37 @@ h2 {
     opacity: .8;
 }
 
+/* Badges discretos (cinza) – juntos no canto superior direito */
+.card-metrics {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+
+    display: flex;
+    flex-direction: column; /* um embaixo do outro */
+    gap: 4px;               /* bem próximo */
+
+    align-items: flex-end;
+    user-select: none;
+}
+
+.card-metric {
+    padding: 4px 8px;
+    border-radius: 10px;
+
+    background: #f3f4f6;    /* cinza bem leve */
+    border: 1px solid #e5e7eb;
+    color: #4b5563;         /* cinza escuro discreto */
+
+    font-weight: 600;
+    font-size: 11px;
+    line-height: 1;
+
+    box-shadow: none;       /* sem sombra pra não chamar atenção */
+    min-width: auto;
+    text-align: right;
+}
+
 /* Impactos */
 .impacto {
     display: inline-block;
@@ -106,18 +187,22 @@ h2 {
     background: #ffe0e0;
     border: 1px solid #cc0000;
 }
+
 .impacto-laranja {
     background: #fff1d6;
     border: 1px solid #d28b00;
 }
+
 .impacto-medio {
     background: #e5f1ff;
     border: 1px solid #2a7abd;
 }
+
 .impacto-baixo {
     background: #e7ffe9;
     border: 1px solid #2e8b57;
 }
+
 .impacto-zero {
     background: #eeeeee;
     border: 1px solid #aaaaaa;

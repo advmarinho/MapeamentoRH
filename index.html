@@ -27,6 +27,30 @@
     <div class="sec-actions">
         <button id="btn-Novas-beneficio" type="button">Novas Ações</button>
     </div>
+
+    <div class="config-bar">
+        <div class="config-item">
+            <label for="cfg-fator-horas">Fator de horas (AS IS × fator)</label>
+            <input id="cfg-fator-horas" type="number" step="0.01" min="0" value="0.75">
+            <div class="config-hint">Ex: 0,75 para estimar 75% das linhas AS IS</div>
+        </div>
+
+        <div class="config-item">
+            <label for="cfg-valor-hora">Valor por hora (R$)</label>
+            <input id="cfg-valor-hora" type="number" step="0.01" min="0" value="0">
+            <div class="config-hint">Ex: 85,00 para custo médio/hora</div>
+        </div>
+
+        <div class="config-item">
+            <label for="cfg-exibicao-moeda">Exibição do valor</label>
+            <select id="cfg-exibicao-moeda">
+                <option value="compact">Compacto (R$ 2k)</option>
+                <option value="full">Completo (R$ 2.000)</option>
+            </select>
+            <div class="config-hint">Apenas muda a visualização no card</div>
+        </div>
+    </div>
+
     <div id="lista-beneficios" class="grid"></div>
 
     <h2>Detalhamento das Ações</h2>
@@ -50,7 +74,7 @@
             <div class="bi-card">
                 <div class="bi-numero tooltip"
                     id="bi-tempo"
-                    data-help="Tempo operacional estimado: 60% do total AS IS (total_ASIS × 0,75). Proxy de horas/mês.">
+                    data-help="Tempo operacional estimado: total_ASIS × fator (configurável). Proxy de horas/mês.">
                     0
                 </div>
                 <div class="bi-unidade">horas</div>
@@ -72,7 +96,7 @@
             <div class="bi-card">
                 <div class="bi-numero tooltip"
                     id="bi-sla"
-                    data-help="SLA: 50% das atividades de TO BE indicam potenciais reduções no tempo de atendimento.">
+                    data-help="SLA: média dos SLAs preenchidos no BI individual. Se ninguém preencher, usa fallback totalTOBE × 0,5.">
                     0
                 </div>
                 <div class="bi-unidade">dias</div>
@@ -108,4 +132,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-
